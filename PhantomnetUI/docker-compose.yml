@@ -1,0 +1,168 @@
+version: "3.9"
+
+services:
+
+  # ── SRC — Secure Response & Coordination (port 8006) ────────────────────────
+  src:
+    build:
+      context: ./backend
+      dockerfile: ../docker/Dockerfile.src
+    container_name: phantomnet-src
+    ports:
+      - "8006:8006"
+    volumes:
+      - src_db:/app/db
+      - src_certs:/app/src_certs
+    environment:
+      - SIEM_URL=http://siem:8003/api/siem/log
+    depends_on:
+      - siem
+    restart: unless-stopped
+
+  # ── ARE — Autonomous Response Engine (port 8000) ────────────────────────────
+  are:
+    build:
+      context: ./backend
+      dockerfile: ../docker/Dockerfile.are
+    container_name: phantomnet-are
+    ports:
+      - "8000:8000"
+    volumes:
+      - are_db:/app/db
+    environment:
+      - SIEM_URL=http://siem:8003/api/siem/log
+      - SRC_URL=http://src:8006/api/src/send
+    depends_on:
+      - siem
+      - src
+    restart: unless-stopped
+
+  # ── DAG — Dynamic Attack Generator (port 8001) ──────────────────────────────
+  dag:
+    build:
+      context: ./backend
+      dockerfile: ../docker/Dockerfile.dag
+    container_name: phantomnet-dag
+    ports:
+      - "8001:8001"
+    volumes:
+      - imagenet_data:/app/imagenet_subset
+    environment:
+      - SIEM_URL=http://siem:8003/api/siem/log
+      - SRC_URL=http://src:8006/api/src/send
+    depends_on:
+      - siem
+      - src
+    restart: unless-stopped
+
+  # ── AUTH — Authentication Backend (port 8002) ───────────────────────────────
+  auth:
+    build:
+      context: ./backend
+      dockerfile: ../docker/Dockerfile.auth
+    container_name: phantomnet-auth
+    ports:
+      - "8002:8002"
+    volumes:
+      - auth_db:/app/db
+    environment:
+      - SIEM_URL=http://siem:8003/api/siem/log
+      - SRC_URL=http://src:8006/api/src/send
+    depends_on:
+      - siem
+      - src
+    restart: unless-stopped
+
+  # ── SIEM — Logging Engine (port 8003) ───────────────────────────────────────
+  siem:
+    build:
+      context: ./backend
+      dockerfile: ../docker/Dockerfile.siem
+    container_name: phantomnet-siem
+    ports:
+      - "8003:8003"
+    environment:
+      - ES_HOST=http://host.docker.internal:9200
+    restart: unless-stopped
+
+  # ── REPORT — Report Backend (port 8004) ─────────────────────────────────────
+  report:
+    build:
+      context: ./backend
+      dockerfile: ../docker/Dockerfile.report
+    container_name: phantomnet-report
+    ports:
+      - "8004:8004"
+    volumes:
+      - report_db:/app/db
+    environment:
+      - SIEM_URL=http://siem:8003/api/siem/log
+      - SRC_URL=http://src:8006/api/src/send
+    depends_on:
+      - siem
+      - src
+    restart: unless-stopped
+
+  # ── IVM — Threat Detection Backend (port 5000) ──────────────────────────────
+  ivm:
+    build:
+      context: ./backend
+      dockerfile: ../docker/Dockerfile.ivm
+    container_name: phantomnet-ivm
+    ports:
+      - "5000:5000"
+    volumes:
+      - ivm_db:/app/db
+      - ivm_uploads:/app/uploads
+    environment:
+      - SIEM_URL=http://siem:8003/api/siem/log
+      - SRC_URL=http://src:8006/api/src/send
+    depends_on:
+      - siem
+      - src
+    restart: unless-stopped
+
+  # ── XAI — Explainability Engine (port 5001) ─────────────────────────────────
+  xai:
+    build:
+      context: ./backend
+      dockerfile: ../docker/Dockerfile.xai
+    container_name: phantomnet-xai
+    ports:
+      - "5001:5001"
+    environment:
+      - SIEM_URL=http://siem:8003/api/siem/log
+      - SRC_URL=http://src:8006/api/src/send
+    depends_on:
+      - siem
+      - src
+    restart: unless-stopped
+
+  # ── FRONTEND — React Dashboard (port 80) ────────────────────────────────────
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.frontend
+    container_name: phantomnet-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - are
+      - dag
+      - auth
+      - siem
+      - src
+      - report
+      - ivm
+      - xai
+    restart: unless-stopped
+
+volumes:
+  are_db:
+  auth_db:
+  report_db:
+  ivm_db:
+  ivm_uploads:
+  imagenet_data:
+  src_db:
+  src_certs:
