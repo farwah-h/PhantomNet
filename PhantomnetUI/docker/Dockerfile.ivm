@@ -1,0 +1,13 @@
+FROM phantomnet-base:latest
+
+COPY threat_detection_backend.py api-endpoints.py database.py siem_logger.py src_client.py calibration_loader.py ./
+COPY yolov5/ ./yolov5/
+COPY models/ ./models/
+
+RUN mkdir -p db uploads
+
+COPY db/phantomnet.db ./db/phantomnet.db
+
+EXPOSE 5000
+
+CMD ["uvicorn", "threat_detection_backend:app", "--host", "0.0.0.0", "--port", "5000"]

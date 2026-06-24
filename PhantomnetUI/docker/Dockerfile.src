@@ -1,0 +1,11 @@
+FROM phantomnet-base:latest
+
+RUN pip install --no-cache-dir cryptography
+
+COPY src_backend.py siem_logger.py ./
+
+RUN mkdir -p db src_certs
+
+EXPOSE 8006
+
+CMD ["uvicorn", "src_backend:app", "--host", "0.0.0.0", "--port", "8006"]

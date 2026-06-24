@@ -1,0 +1,29 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    libgl1 \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy and install all heavy dependencies once
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Pin numpy to 1.x to avoid conflict with PyTorch 2.2.0
+RUN pip install --no-cache-dir "numpy<2.0"
+
+# Install additional shared dependencies
+RUN pip install --no-cache-dir \
+    bcrypt \
+    pydantic[email] \
+    elasticsearch \
+    reportlab \
+    fpdf2 \
+    "shap<0.44" \
+    lime  

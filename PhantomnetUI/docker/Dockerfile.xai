@@ -1,0 +1,8 @@
+FROM phantomnet-base:latest
+
+COPY xai_backend.py siem_logger.py src_client.py ./
+COPY models/ ./models/
+
+EXPOSE 5001
+
+CMD ["uvicorn", "xai_backend:app", "--host", "0.0.0.0", "--port", "5001"]
