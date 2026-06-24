@@ -339,43 +339,6 @@ In Docker Compose these are set per-service in `docker-compose.yml`. For manual 
 
 ---
 
-## Project Structure
-
-```
-.
-├── src/                               # React frontend
-│   ├── pages/                         # dashboard, threat-detection, attack-simulation,
-│   │                                    xai-engine, response-engine, siem-logs,
-│   │                                    settings, analyst-review, profile, login
-│   ├── components/ui/                 # shadcn/ui primitives
-│   └── lib/                           # are-integration.ts, reportUtils.ts, utils.ts
-├── backend/
-│   ├── models/                        # ← place autoencoder.pth and yolo-trained.pt here
-│   ├── yolov5/                        # ← clone ultralytics/yolov5 here
-│   ├── uploads/                       # uploaded images (auto-created)
-│   ├── db/                            # SQLite databases (auto-created)
-│   ├── src_certs/                     # SRC TLS certificates (auto-generated)
-│   ├── threat_detection_backend.py    # IVM — ensemble detection
-│   ├── main.py                        # DAG — attack simulation
-│   ├── xai_backend.py                 # XAI — explainability engine
-│   ├── are-backend.py                 # ARE — autonomous response engine
-│   ├── auth_backend.py                # AUTH — authentication & RBAC
-│   ├── siem_backend.py                # LSE/SIEM — logging engine
-│   ├── src_backend.py                 # SRC — secure coordination
-│   ├── src_client.py                  # SRC — shared client helper
-│   ├── report_backend.py              # Report — PDF/JSON generation
-│   ├── database.py                    # IVM SQLite schema & helpers
-│   ├── siem_logger.py                 # Shared fire-and-forget SIEM logging helper
-│   └── requirements.txt
-├── docker/
-│   ├── Dockerfile.*                   # Per-service Dockerfiles
-│   └── nginx.conf                     # Reverse proxy config
-├── docker-compose.yml
-└── docs/                              # SDS implementation report (PDF)
-```
-
----
-
 ## Security Highlights
 
 - Passwords hashed with **bcrypt**; never stored in plaintext.
