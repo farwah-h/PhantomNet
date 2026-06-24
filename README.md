@@ -91,12 +91,41 @@ All inter-module traffic is routed through Nginx and secured via the SRC layer (
 | CUDA Toolkit | 11.8 or 12.x | Optional — GPU acceleration for PyTorch |
 | YOLOv5 repo | Any recent | Must be cloned inside `backend/yolov5/`. See below. |
 
-### Elasticsearch (Required for SIEM / LSE Module)
-
-The SIEM backend (`siem_backend.py`) depends on a running **Elasticsearch 8.x** instance. Without it, the SIEM Logs page will show **OFFLINE** and no security events will be stored or queryable. All other modules continue to function normally.
-
-#### Install Elasticsearch
-
+## Before You Start — Required Setup Steps
+ 
+Complete all three steps before running the project.
+ 
+### Step 1 — Download the Trained Model Weights
+ 
+The IVM and XAI backends require two weight files that are not included in this repository due to size. Download them and place them in `backend/models/`.
+ 
+| File | Download | Used by |
+|---|---|---|
+| `autoencoder.pth` | [Download from Google Drive](https://drive.google.com/file/d/12hkBIQNXnmOH96ZlhC-LhudBBU07jn7N/view?usp=sharing) | IVM, XAI |
+| `yolo-trained.pt` | [Download from Google Drive](https://drive.google.com/file/d/1fP6YVH1OcH91lCV8OFCDGqYgdLnmnAXI/view?usp=sharing) | IVM |
+ 
+```bash
+mkdir -p backend/models
+# Move the downloaded files into that folder
+mv ~/Downloads/autoencoder.pth backend/models/
+mv ~/Downloads/yolo-trained.pt backend/models/
+```
+ 
+> If these files are missing, the affected model is skipped at startup with a warning. The ensemble will still run on the remaining models but with reduced detection accuracy. ResNet-50 weights are downloaded automatically from PyTorch Hub on first run.
+ 
+### Step 2 — Clone the YOLOv5 Repository
+ 
+The IVM backend requires the YOLOv5 source for NMS utilities. Clone it directly inside the `backend/` folder:
+ 
+```bash
+cd backend
+git clone https://github.com/ultralytics/yolov5.git
+```
+ 
+The expected path is `backend/yolov5/`. If missing, YOLOv5 detection is disabled and a warning is printed at startup.
+ 
+### Step 3 — Set Up Elasticsearch (for SIEM)
+ 
 **Option 1 — Official installer (Windows/macOS/Linux)**
 
 Download from: https://www.elastic.co/downloads/elasticsearch
@@ -179,38 +208,6 @@ python siem_backend.py
 - The **SIEM Logs** page shows "SIEM Backend Offline".
 - Log events from all other modules are still emitted (fire-and-forget via `siem_logger.py`) but are silently dropped — no crash or chain failure occurs.
 - All other modules (IVM, ARE, DAG, XAI, AUTH, SRC, Report) continue to function independently.
-
----
-
-### Trained Model Files (Required for IVM and XAI)
-
-The IVM and XAI backends require two trained model weight files that are **not included** in the repository due to file size. Place them in the `backend/models/` directory before starting the services.
-
-```
-backend/
-└── models/
-    ├── autoencoder.pth      # Trained ImprovedAutoencoder weights
-    └── yolo-trained.pt      # Custom-trained YOLOv5 checkpoint
-```
-
-| File | Description | Required by |
-|---|---|---|
-| `autoencoder.pth` | Custom skip-connection autoencoder (latent_dim=512) trained on clean ImageNet images. Used for reconstruction-error anomaly detection. | IVM, XAI (SHAP) |
-| `yolo-trained.pt` | YOLOv5 checkpoint trained to detect adversarial objects and patches. | IVM |
-
-> If these files are missing, the corresponding model will be skipped with a warning at startup. The ensemble will still run using the remaining available models, but detection accuracy will be reduced. ResNet-50 weights are downloaded automatically from PyTorch Hub on first run.
-
-### YOLOv5 Repository (Required for IVM)
-
-The IVM backend uses the YOLOv5 source repository for NMS and model utilities. Clone it into the backend directory:
-
-```bash
-cd backend/
-git clone https://github.com/ultralytics/yolov5.git
-```
-
-The expected path is `backend/yolov5/`. If this directory is missing, YOLOv5 detection will be disabled and a warning will be printed at startup.
-
 ---
 
 ## Getting Started
